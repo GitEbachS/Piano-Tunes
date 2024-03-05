@@ -1,0 +1,6 @@
+@PianoTunesAPI_HostAddress = http://localhost:5273
+
+GET {{PianoTunesAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

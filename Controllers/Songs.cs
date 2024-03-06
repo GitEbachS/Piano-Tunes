@@ -67,13 +67,31 @@ namespace PianoTunesAPI.Controllers
             app.MapPost("/api/songs/new", (PianoTunesAPIDbContext db, SongDto dto) =>
             {
                 // Assuming dto includes ArtistId
-                Song newSong = new() { Title = dto.Title, Album = dto.Album, Length = dto.Length, ArtistId = dto.ArtistId };
+                Song newSong = new Song { Title = dto.Title, Album = dto.Album, Length = dto.Length, ArtistId = dto.ArtistId };
+
+                // Ensure the Genres collection is initialized
+                newSong.Genres = new List<Genre>();
+
+                foreach (int genreId in dto.GenreId)
+                {
+                    Genre addGenre = db.Genres.SingleOrDefault(g => g.Id == genreId);
+                    if (addGenre != null)
+                    {
+                        // Instead of adding the genre directly, you should associate it with the new song
+                        newSong.Genres.Add(addGenre);
+                    }
+                    else
+                    {
+                        return Results.NoContent();
+                    }
+                }
 
                 db.Songs.Add(newSong);
                 db.SaveChanges();
 
                 return Results.Created($"/api/songs/new/{newSong.Id}", newSong);
             });
+
 
         }
     }

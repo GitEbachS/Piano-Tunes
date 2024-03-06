@@ -28,7 +28,7 @@ namespace PianoTunesAPI.Controllers
                 return Results.Ok(singleGenre);
             });
 
-            app.MapDelete("/api/genres/{genreId}", (PianoTunesAPIDbContext db, int genreId) =>
+            app.MapDelete("/api/deleteGenre/{genreId}", (PianoTunesAPIDbContext db, int genreId) =>
                 {
                     Genre deleteGenre = db.Genres.SingleOrDefault(g => g.Id == genreId);
                     try

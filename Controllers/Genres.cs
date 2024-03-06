@@ -67,6 +67,7 @@ namespace PianoTunesAPI.Controllers
                 return Results.Created($"/api/genres/new/{newGenre.Id}", newGenre);
             });
 
+            //add a genre to a song
             app.MapPost("/api/song/addGenre", (PianoTunesAPIDbContext db, GenreSongDto genreSong) =>
             {
                 var singleSongToUpdate = db.Songs
@@ -86,6 +87,28 @@ namespace PianoTunesAPI.Controllers
                     return Results.BadRequest("Invalid data submitted");
                 }
             });
+
+            //delete a genre from a song
+            app.MapDelete("/api/song/{songId}/deleteGenre/{genreId}", (PianoTunesAPIDbContext db, int genreId, int songId) =>
+            {
+                 var singleSongToUpdate = db.Songs
+                .Include(s => s.Genres)
+                .FirstOrDefault(s => s.Id == songId);
+                var genreToDelete = db.Genres.FirstOrDefault(g => g.Id == genreId);
+
+                try
+                {
+                    singleSongToUpdate.Genres.Remove(genreToDelete);
+                    db.SaveChanges();
+                    return Results.NoContent();
+
+                }
+                catch (DbUpdateException)
+                {
+                    return Results.BadRequest("Invalid data submitted");
+                }
+            });
+
         }
     }
 

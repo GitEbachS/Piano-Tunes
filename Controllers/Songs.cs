@@ -1,4 +1,5 @@
 ﻿using PianoTunesAPI.Models;
+using PianoTunesAPI.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace PianoTunesAPI.Controllers
@@ -13,10 +14,12 @@ namespace PianoTunesAPI.Controllers
                 .ToList();
             });
 
+            //get a single song with the artist and genres
             app.MapGet("api/songs/{songId}", (PianoTunesAPIDbContext db, int songId) =>
             {
                 Song singleSong = db.Songs
                 .Include(s => s.Artist)
+                .Include(s => s.Genres)
                 .FirstOrDefault(s => s.Id == songId);
 
                 if (singleSong == null)
@@ -27,7 +30,7 @@ namespace PianoTunesAPI.Controllers
             });
 
             //delete a single song
-            app.MapDelete("api/songs/{songId}", (PianoTunesAPIDbContext db, int songId) =>
+            app.MapDelete("api/songs/delete/{songId}", (PianoTunesAPIDbContext db, int songId) =>
             {
                 Song deleteSong = db.Songs.FirstOrDefault(s => s.Id == songId);
 
@@ -42,6 +45,36 @@ namespace PianoTunesAPI.Controllers
                     return Results.NoContent();
                 }
             });
+
+            //update a song
+            app.MapPut("/api/songs/update/{songId}", (PianoTunesAPIDbContext db, int songId, SongDto dto) =>
+            {
+                Song song = db.Songs.FirstOrDefault(s => s.Id == songId);
+
+                if (song == null)
+                {
+                    return Results.BadRequest("Song not found!");
+                }
+             
+                song.Title = dto.Title;
+                song.Album = dto.Album;
+                song.Length = dto.Length;
+                db.SaveChanges();
+                return Results.Ok(song);
+            });
+
+            //create new song
+            app.MapPost("/api/songs/new", (PianoTunesAPIDbContext db, SongDto dto) =>
+            {
+                // Assuming dto includes ArtistId
+                Song newSong = new() { Title = dto.Title, Album = dto.Album, Length = dto.Length, ArtistId = dto.ArtistId };
+
+                db.Songs.Add(newSong);
+                db.SaveChanges();
+
+                return Results.Created($"/api/songs/new/{newSong.Id}", newSong);
+            });
+
         }
     }
     

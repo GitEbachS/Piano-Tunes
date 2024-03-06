@@ -1,4 +1,5 @@
 ﻿using PianoTunesAPI.Models;
+using PianoTunesAPI.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace PianoTunesAPI.Controllers
@@ -47,29 +48,40 @@ namespace PianoTunesAPI.Controllers
             });
 
             //update an artist
-            app.MapPut("/api/artists/{artistId}", (PianoTunesAPIDbContext db, int artistId, Artist artist) =>
+            app.MapPut("/api/artists/{artistId}", (PianoTunesAPIDbContext db, int artistId, ArtistDto dto) =>
             {
                 Artist artistToUpdate = db.Artists.SingleOrDefault(a => a.Id == artistId);
                 if (artistToUpdate == null)
                 {
                     return Results.NotFound();
                 }
-                artistToUpdate.Name = artist.Name;
-                artistToUpdate.Age = artist.Age;
-                artistToUpdate.Bio = artist.Bio;
+               
+                artistToUpdate.Name = dto.Name;
+                artistToUpdate.Age = dto.Age;
+                artistToUpdate.Bio = dto.Bio;
 
                 db.SaveChanges();
                 return Results.Ok(artistToUpdate);
             });
 
             //View single artist with the list of songs
-            app.MapGet("/api/songs/{artistId}", (PianoTunesAPIDbContext db, int artistId) =>
+            app.MapGet("/api/artist/songs/{artistId}", (PianoTunesAPIDbContext db, int artistId) =>
             {
                 var filteredArtist = db.Artists
                 .Include(a => a.Songs)
+                .ThenInclude(s => s.Genres)
                 .SingleOrDefault(a => a.Id == artistId);
                 return filteredArtist;
 
+            });
+
+            //Create an artist
+            app.MapPost("/api/artist/new", (PianoTunesAPIDbContext db, ArtistDto dto) =>
+            {
+                Artist newArtist = new() { Name = dto.Name, Age = dto.Age, Bio = dto.Bio };
+                db.Artists.Add(newArtist);
+                db.SaveChanges();
+                return Results.Created($"/api/artist/new/{newArtist.Id}", newArtist);
             });
 
         }

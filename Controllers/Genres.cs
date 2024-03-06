@@ -1,4 +1,5 @@
 ﻿using PianoTunesAPI.Models;
+using PianoTunesAPI.DTOs;
 using Microsoft.EntityFrameworkCore;
 
 namespace PianoTunesAPI.Controllers
@@ -7,13 +8,14 @@ namespace PianoTunesAPI.Controllers
     {
         public static void Map(WebApplication app)
         {
-            app.MapGet("api/genres", (PianoTunesAPIDbContext db) =>
+            app.MapGet("/api/genres", (PianoTunesAPIDbContext db) =>
             {
                 return db.Genres
                 .ToList();
             });
 
-            app.MapGet("api/genres/{genreId}", (PianoTunesAPIDbContext db, int genreId) =>
+            //get the single genre with the songs
+            app.MapGet("/api/genres/{genreId}", (PianoTunesAPIDbContext db, int genreId) =>
             {
                 Genre singleGenre = db.Genres
                 .Include(g => g.Songs)
@@ -41,6 +43,49 @@ namespace PianoTunesAPI.Controllers
                     }
 
                 });
+
+            app.MapPut("/api/genres/update/{genreId}", (PianoTunesAPIDbContext db, int genreId, GenreDto dto) =>
+            {
+                Genre genre = db.Genres.SingleOrDefault(s => s.Id == genreId);
+
+                if (genre == null)
+                {
+                    return Results.BadRequest("Genre not found!");
+                }
+
+                genre.Description = dto.Description;
+                db.SaveChanges();
+                return Results.Ok(genre);
+            });
+
+            //add a new genre
+            app.MapPost("/api/genres/new", (PianoTunesAPIDbContext db, GenreDto dto) =>
+            {
+                Genre newGenre = new() { Description = dto.Description };
+                db.Genres.Add(newGenre);
+                db.SaveChanges();
+                return Results.Created($"/api/genres/new/{newGenre.Id}", newGenre);
+            });
+
+            app.MapPost("/api/song/addGenre", (PianoTunesAPIDbContext db, GenreSongDto genreSong) =>
+            {
+                var singleSongToUpdate = db.Songs
+                .Include(s => s.Genres)
+                .FirstOrDefault(s => s.Id == genreSong.SongId);
+                var genreToAdd = db.Genres.FirstOrDefault(g => g.Id == genreSong.GenreId);
+
+                try
+                {
+                    singleSongToUpdate.Genres.Add(genreToAdd);
+                    db.SaveChanges();
+                    return Results.NoContent();
+
+                }
+                catch (DbUpdateException)
+                {
+                    return Results.BadRequest("Invalid data submitted");
+                }
+            });
         }
     }
 

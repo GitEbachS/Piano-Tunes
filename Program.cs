@@ -1,5 +1,6 @@
 using PianoTunesAPI;
 using PianoTunesAPI.Models;
+using PianoTunesAPI.DTOs;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Http.Json;
@@ -37,6 +38,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 Artists.Map(app);
+Genres.Map(app);
+Songs.Map(app);
 
 app.Run();
 
